@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>درونات البيئة - تحليل البيانات البيئية</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        section {
+            padding: 20px;
+        }
+        footer {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            overflow: hidden;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .data-section {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #map {
+            height: 400px;
+            margin-top: 20px;
+        }
+        video {
+            display: block;
+            margin: 0 auto;
+        }
+        img {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+    <!-- إضافة مكتبة Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- إضافة مكتبة Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>درونات البيئة</h1>
+    <p>مشروع لحل مشاكل التصحر وزحف الرمال باستخدام الدرونات</p>
+</header>
+
+<section class="container">
+    <div class="data-section">
+        <h2>عن المشروع</h2>
+        <p>
+            يهدف مشروع "درونات البيئة" إلى مواجهة التدهور البيئي في المملكة العربية السعودية باستخدام درونات متقدمة تعتمد على تقنيات الذكاء الاصطناعي لتحليل البيانات البيئية. يركز المشروع على حل مشاكل التصحر، زحف الرمال، وانخفاض الغطاء النباتي.
+        </p>
+    </div>
+
+    <div class="data-section">
+        <h2>البيانات البيئية</h2>
+        <p>
+            سيتم هنا عرض بيانات محدثة حول الغطاء النباتي، جودة التربة، والطقس باستخدام تقنيات استشعار عن بُعد.
+        </p>
+    </div>
+
+    <!-- إضافة نموذج بيانات المستخدم -->
+    <div class="data-section">
+        <h2>أدخل البيانات للتنبؤ بالغطاء النباتي</h2>
+        <form id="predictionForm">
+            <label for="temperature">درجة الحرارة (°C):</label>
+            <input type="number" id="temperature" name="temperature" step="0.1" required><br><br>
+
+            <label for="humidity">الرطوبة (%):</label>
+            <input type="number" id="humidity" name="humidity" step="0.1" required><br><br>
+
+            <label for="soil_quality">جودة التربة (%):</label>
+            <input type="number" id="soil_quality" name="soil_quality" step="0.1" required><br><br>
+
+            <label for="vegetation_cover">الغطاء النباتي الحالي (%):</label>
+            <input type="number" id="vegetation_cover" name="vegetation_cover" step="0.1" required><br><br>
+
+            <button type="button" onclick="predictVegetation()">تنبؤ</button>
+        </form>
+        <p id="predictionResult"></p>
+    </div>
+
+    <!-- إضافة قسم الرسم البياني -->
+    <div class="data-section">
+        <h2>الغطاء النباتي على مدار الأشهر</h2>
+        <canvas id="vegetationChart"></canvas>
+    </div>
+
+    <!-- إضافة قسم الخرائط التفاعلية -->
+    <div class="data-section">
+        <h2>الخرائط التفاعلية - قبل وبعد استخدام الدرونات</h2>
+        <div id="map"></div>
+    </div>
+
+    <!-- إضافة قسم الفيديو -->
+    <div class="data-section">
+        <h2>فيديو توضيحي</h2>
+        <video width="600" controls>
+            <source src="drone_project.mp4" type="video/mp4">
+            متصفحك لا يدعم تشغيل الفيديو.
+        </video>
+    </div>
+
+    <!-- إضافة صورة توضيحية -->
+    <div class="data-section">
+        <h2>صورة توضيحية</h2>
+        <img src="drone_image.jpg" alt="صورة توضيحية للدرونات">
+    </div>
+
+    <!-- إضافة قسم تحميل التقرير -->
+    <div class="data-section">
+        <h2>تنزيل التقارير</h2>
+        <button onclick="downloadReport()">تنزيل تقرير المشروع</button>
+    </div>
+</section>
+
+<footer>
+    <p>&copy; 2024 درونات البيئة - جميع الحقوق محفوظة</p>
+</footer>
+
+<!-- سكربت لجافا سكريبت للرسم البياني -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // رسم بياني باستخدام Chart.js
+    var ctx = document.getElementById('vegetationChart').getContext('2d');
+    var vegetationChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+            datasets: [{
+                label: 'نسبة الغطاء النباتي (%)',
+                data: [10, 15, 20, 25, 35, 40],
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+
+<!-- سكربت لخريطة Leaflet -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // إنشاء خريطة Leaflet
+    var map = L.map('map').setView([24.7136, 46.6753], 5); // إحداثيات الرياض
+
+    // طبقة الخريطة قبل استخدام الدرون
+    var beforeLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+
+    // طبقة الخريطة بعد استخدام الدرون
+    var afterLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+
+    // تفعيل الطبقة الافتراضية (قبل الاستخدام)
+    beforeLayer.addTo(map);
+
+    // إضافة التحكم في الطبقات للتبديل بين "قبل" و "بعد"
+    var baseMaps = {
+        "قبل استخدام الدرونات": beforeLayer,
+        "بعد استخدام الدرونات": afterLayer
+    };
+
+    L.control.layers(baseMaps).addTo(map);
+});
+</script>
+
+<!-- سكربت لتنزيل التقرير -->
+<script>
+function downloadReport() {
+    const link = document.createElement('a');
+    link.href = 'path_to_report.pdf'; // ضع رابط التقرير هنا
+    link.download = 'تقرير_مشروع_درونات_البيئة.pdf';
+    link.click();
+}
+</script>
+
+<!-- سكربت لتوقع الغطاء النباتي -->
+<script>
+function predictVegetation() {
+    let temperature = parseFloat(document.getElementById('temperature').value);
+    let humidity = parseFloat(document.getElementById('humidity').value);
+    let soil_quality = parseFloat(document.getElementById('soil_quality').value);
+    let vegetation_cover = parseFloat(document.getElementById('vegetation_cover').value);
+
+    let predicted_value = (temperature * 0.3) + (humidity * 0.2) + (soil_quality * 0.4) + (vegetation_cover * 0.1); // مثال بسيط
+
+    document.getElementById('predictionResult').innerText = "تنبؤ الغطاء النباتي المستقبلي: " + predicted_value.toFixed(2) + "%";
+}
+</script>
